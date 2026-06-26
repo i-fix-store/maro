@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maro Store - لوحة التحكم الفخمة</title>
-    <link class="rtl" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <title>Maro Store - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -21,31 +21,61 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             font-family: system-ui, -apple-system, sans-serif;
-            padding-bottom: 80px;
+            overflow-x: hidden;
         }
 
-        /* المنيو السفلي للموبايل */
-        .mobile-nav {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
+        /* الهيدر العلوي */
+        .maro-header {
             background-color: var(--card-dark);
-            border-top: 1px solid var(--border-dark);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
+            border-bottom: 1px solid var(--border-dark);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        /* المنيو الجانبي الذكي (Sidebar) */
+        .sidebar {
+            position: fixed;
+            top: 0; bottom: 0; right: -280px;
+            width: 280px;
+            background-color: var(--card-dark);
+            border-left: 1px solid var(--border-dark);
             z-index: 1000;
+            transition: 0.3s ease-in-out;
+            padding: 20px;
         }
 
-        .mobile-nav-item {
+        .sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            display: none;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
             color: var(--text-muted);
+            padding: 12px 15px;
+            border-radius: 10px;
             text-decoration: none;
-            text-align: center;
-            font-size: 11px;
+            margin-bottom: 8px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.2s;
         }
 
-        .mobile-nav-item.active {
+        .menu-item:hover, .menu-item.active {
+            background-color: var(--bg-dark);
             color: var(--accent-color);
         }
 
@@ -74,115 +104,158 @@
             border-radius: 10px;
         }
 
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-        
-        .status-pending { background-color: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .status-completed { background-color: rgba(16, 185, 129, 0.2); color: #10b981; }
-
         .page-content { display: none; }
         .page-content.active { display: block; }
+
+        /* ستايل صورة البروفايل */
+        .profile-img-container {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            background: var(--bg-dark);
+            border: 2px solid var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 40px;
+            color: var(--text-muted);
+        }
+
+        /* صور الـ QR Code لشحن الرصيد */
+        .qr-box {
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            display: inline-block;
+            max-width: 180px;
+        }
+        .qr-box img {
+            width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
 
-    <div class="p-3 d-flex justify-content-between align-items-center" style="background-color: var(--card-dark); border-bottom: 1px solid var(--border-dark);">
-        <span class="fw-bold fs-5"><i class="fa-solid fa-gem text-warning me-2"></i> لوحة Maro</span>
-        <span class="badge bg-dark border border-secondary p-2" style="border-radius: 8px; font-size: 14px;">
-            رصيدك: <span id="userBalanceDisplay" class="text-success fw-bold">0.00</span>$
+    <!-- الغطاء الشفاف عند فتح المنيو -->
+    <div class="sidebar-overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <!-- الهيدر العلوي مع زر الثلاث شرط -->
+    <div class="maro-header d-flex justify-content-between align-items-center">
+        <button class="btn text-white fs-4 p-0" onclick="toggleMenu()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <span class="fw-bold fs-5"><i class="fa-solid fa-gem text-warning me-1"></i> متجر Maro</span>
+        <span class="badge bg-dark border border-secondary p-2" style="font-size: 14px;">
+            <span id="userBalanceDisplay" class="text-success fw-bold">0.00</span>$
         </span>
     </div>
 
+    <!-- المنيو الجانبي (Sidebar) الفخم -->
+    <div class="sidebar" id="sidebarMenu">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold m-0 text-white">القائمة</h5>
+            <button class="btn text-muted fs-5 p-0" onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="menu-item active" onclick="switchPage('newOrderPage')"><i class="fa-solid fa-cart-plus me-2"></i> طلب جديد</div>
+        <div class="menu-item" onclick="switchPage('ordersLogPage')"><i class="fa-solid fa-list-check me-2"></i> سجل طلباتي</div>
+        <div class="menu-item" onclick="switchPage('depositPage')"><i class="fa-solid fa-wallet me-2"></i> شحن رصيد</div>
+        <div class="menu-item" onclick="switchPage('profilePage')"><i class="fa-solid fa-user me-2"></i> حسابي الشخصي</div>
+        <hr style="border-color: var(--border-dark);">
+        <div class="menu-item text-danger" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket me-2"></i> خروج</div>
+    </div>
+
+    <!-- المحتوى المتغير للطلبات والصفحات -->
     <div class="container mt-4 px-3">
         
+        <!-- صفحة 1: طلب جديد -->
         <div id="newOrderPage" class="page-content active">
             <div class="smm-card">
-                <h5 class="fw-bold mb-4"><i class="fa-solid fa-cart-plus me-2 text-primary"></i> طلب خدمة أوتوماتيكية</h5>
-                
+                <h5 class="fw-bold mb-4"><i class="fa-solid fa-bolt text-primary me-2"></i> طلب خدمة أوتوماتيكية</h5>
                 <form id="smmOrderForm">
                     <div class="mb-3">
                         <label class="form-label text-muted small">اختر الخدمة</label>
                         <select class="form-select smm-select" id="orderService" required>
                             <option value="452" data-price="2.50">1000 متابع إنستغرام مكس - 2.50$</option>
                             <option value="821" data-price="5.00">شحن شدات ببجي 325 PUBG UC - 5.00$</option>
-                            <option value="915" data-price="3.00">1000 متابع فيسبوك حقيقي - 3.00$</option>
                         </select>
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label text-muted small">الكمية (مثال: 1 للملفات أو العدد المطلوب للألعاب)</label>
+                        <label class="form-label text-muted small">الكمية</label>
                         <input type="number" class="form-control smm-input" id="orderQty" value="1" min="1" required>
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label text-muted small" id="inputLabel">الرابط أو الآيدي (ID)</label>
-                        <input type="text" class="form-control smm-input" id="inputData" placeholder="ضع الرابط أو الـ ID هنا" required>
+                        <label class="form-label text-muted small">الرابط أو الآيدي (ID)</label>
+                        <input type="text" class="form-control smm-input" id="inputData" placeholder="ضع البيانات هنا" required>
                     </div>
-
-                    <button type="submit" class="btn btn-fahm w-100 mt-3" id="sendBtn">تأكيد الخصم والطلب الفوري</button>
+                    <button type="submit" class="btn btn-fahm w-100 mt-3" id="sendBtn">تأكيد الخصم والطلب</button>
                 </form>
             </div>
         </div>
 
+        <!-- صفحة 2: سجل الطلبات -->
         <div id="ordersLogPage" class="page-content">
-            <h5 class="fw-bold mb-3"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> سجل طلباتك السابقة</h5>
-            <div id="ordersContainer">
-                <div class="text-center text-muted py-4">جاري تحميل البيانات من السيرفر...</div>
-            </div>
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> طلباتك السابقة</h5>
+            <div id="ordersContainer"></div>
         </div>
 
+        <!-- صفحة 3: شحن الرصيد بـ الـ QR الكود -->
         <div id="depositPage" class="page-content">
-            <div class="smm-card">
-                <h5 class="fw-bold mb-3 text-warning"><i class="fa-solid fa-wallet me-2"></i> شحن رصيد حسابك</h5>
-                <p class="text-muted small">اشحن حسابك لتفعيل الطلبات الفورية الأوتوماتيكية في الموقع:</p>
-                <hr style="border-color: var(--border-dark);">
+            <div class="smm-card text-center">
+                <h5 class="fw-bold mb-4 text-warning"><i class="fa-solid fa-qrcode me-2"></i> الشحن السريع بالـ QR Code</h5>
                 
-                <div class="mb-3">
-                    <h6 class="fw-bold text-white"><i class="fa-solid fa-mobile-screen me-2 text-danger"></i> فودافون كاش (Vodafone Cash)</h6>
-                    <p class="text-muted small m-0 mt-1">حوّل المبلغ على الرقم التالي: <b class="text-light">01012345678</b></p>
+                <div class="row g-4">
+                    <div class="col-6">
+                        <h6 class="fw-bold text-white mb-2">فودافون كاش</h6>
+                        <div class="qr-box mb-2">
+                            <!-- حط رابط صورة الـ QR بتاع كاش هنا بعد ما تجهزه -->
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=01012345678" alt="Vodafone Cash QR">
+                        </div>
+                        <div class="small text-muted">01012345678</div>
+                    </div>
+
+                    <div class="col-6">
+                        <h6 class="fw-bold text-white mb-2">إنستا باي</h6>
+                        <div class="qr-box mb-2">
+                            <!-- حط رابط صورة الـ QR بتاع انستا باي هنا -->
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=maro@instapay" alt="InstaPay QR">
+                        </div>
+                        <div class="small text-muted">maro@instapay</div>
+                    </div>
                 </div>
 
-                <div class="mb-4">
-                    <h6 class="fw-bold text-white"><i class="fa-solid fa-money-bill-transfer me-2 text-info"></i> إنستا باي (InstaPay)</h6>
-                    <p class="text-muted small m-0 mt-1">العنوان الحسابي: <b class="text-light">maro@instapay</b></p>
-                </div>
-
-                <div class="p-3 border border-warning rounded-3 bg-dark text-center">
-                    <p class="small m-0 text-warning fw-bold">⚠️ بعد التحويل، ارسل صورة الإيصال (الاسكرين) إلى الدعم الفني على الواتساب ليتم إضافة رصيدك بالدولار فوراً!</p>
+                <div class="p-3 border border-warning rounded-3 bg-dark mt-4">
+                    <p class="small m-0 text-warning fw-bold">⚠️ امسح الكود وحوّل المبلغ، ثم ارسل صورة الإيصال للدعم الفني لتفعيل رصيدك فوراً!</p>
                     <a href="https://wa.me/201012345678" target="_blank" class="btn btn-success btn-sm mt-3 fw-bold">
-                        <i class="fa-brands fa-whatsapp me-1"></i> ارسل الإيصال للواتساب
+                        <i class="fa-brands fa-whatsapp me-1"></i> إرسال الإيصال للواتساب
                     </a>
                 </div>
             </div>
         </div>
 
-    </div>
+        <!-- صفحة 4: البروفايل الخاص بكل عميل -->
+        <div id="profilePage" class="page-content">
+            <div class="smm-card text-center">
+                <div class="profile-img-container">
+                    <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <h5 class="fw-bold text-white mb-1" id="profileEmail">جاري التحميل...</h5>
+                <p class="text-muted small mb-3">حساب عميل Maro Store المميز</p>
+                
+                <div class="border-top border-secondary pt-3 text-start">
+                    <div class="mb-2 small text-muted">رقم الحساب الخاص بك (ID):</div>
+                    <div class="p-2 bg-dark rounded text-secondary code font-monospace text-center" id="profileUid" style="font-size: 11px;">---</div>
+                </div>
+            </div>
+        </div>
 
-    <div class="mobile-nav">
-        <div class="mobile-nav-item active" onclick="switchPage('newOrderPage')">
-            <i class="fa-solid fa-plus-circle fa-xl d-block mb-1"></i>
-            <span>طلب جديد</span>
-        </div>
-        <div class="mobile-nav-item" onclick="switchPage('ordersLogPage')">
-            <i class="fa-solid fa-list-check fa-xl d-block mb-1"></i>
-            <span>طلباتي</span>
-        </div>
-        <div class="mobile-nav-item" onclick="switchPage('depositPage')">
-            <i class="fa-solid fa-wallet fa-xl d-block mb-1"></i>
-            <span>شحن الرصيد</span>
-        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, getDocs, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // الـ Config الحقيقي والخاص بـ Maro Store
         const firebaseConfig = {
             apiKey: "AIzaSyDlD_MhqAJnumigyt4duKkIK8B5wvXJMws",
             authDomain: "maro-store-2b73a.firebaseapp.com",
@@ -199,153 +272,99 @@
 
         let currentUser = null;
         let currentBalance = 0.00;
-        
-        // ⚠️ ضَع هنا الـ API Key السري الخاص بحسابك على موقع Foollo
-        const FOOLLO_API_KEY = "YOUR_FOOLLO_API_KEY_HERE"; 
+        const FOOLLO_API_KEY = "9ad38d349b760ad684dc82bec10301f0";
 
-        // التأكد من تسجيل دخول العميل وجلب الرصيد حياً
-        onAuthStateChanged(auth, async (user) => {
+        // فتح وقفل المنيو الجانبي
+        window.toggleMenu = function() {
+            document.getElementById('sidebarMenu').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+
+        // التبديل السلس بين الصفحات
+        window.switchPage = function(pageId) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
+            
+            toggleMenu(); // اقفل المنيو بعد الاختيار للحصول على مظهر مريح
+
+            if (pageId === 'ordersLogPage') loadOrdersLog();
+        }
+
+        // مراقبة تسجيل دخول العميل وربط الرصيد بالتحديث التلقائي المباشر (Realtime)
+        onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                fetchUserBalance();
+                
+                // ملء بيانات صفحة الحساب (Profile)
+                document.getElementById('profileEmail').innerText = user.email;
+                document.getElementById('profileUid').innerText = user.uid;
+
+                // التحديث التلقائي الفوري للرصيد (لو الأدمن شحن يتغير في نفس الثانية!)
+                onSnapshot(doc(db, "users_balance", user.uid), (docSnap) => {
+                    if (docSnap.exists()) {
+                        currentBalance = docSnap.data().balance;
+                        document.getElementById('userBalanceDisplay').innerText = currentBalance.toFixed(2);
+                    }
+                });
             } else {
-                window.location.href = "login.html"; // حماية: يطرده للدخول لو مش مسجل
+                window.location.href = "login.html";
             }
         });
 
-        // دالة جلب الرصيد من الـ Database
-        async function fetchUserBalance() {
-            const userDoc = await getDoc(doc(db, "users_balance", currentUser.uid));
-            if (userDoc.exists()) {
-                currentBalance = userDoc.data().balance;
-                document.getElementById('userBalanceDisplay').innerText = currentBalance.toFixed(2);
-            }
-        }
-
-        // معالجة طلب الخدمة والخصم والـ API
+        // كود معالجة وإرسال الطلبات لـ فولو (مع فحص الرصيد مسبقاً)
         const form = document.getElementById('smmOrderForm');
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const serviceSelect = document.getElementById('orderService');
             const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-            const pricePerUnit = parseFloat(selectedOption.getAttribute('data-price'));
-            const qty = parseInt(document.getElementById('orderQty').value);
-            const totalCost = pricePerUnit * qty;
+            const price = parseFloat(selectedOption.getAttribute('data-price')) * parseInt(document.getElementById('orderQty').value);
 
-            // التكة الذكية: فحص رصيد العميل مسبقاً لحمايتك
-            if (currentBalance < totalCost) {
-                alert(`عذراً! رصيدك الحالي (${currentBalance.toFixed(2)}$) لا يكفي. تكلفة هذا الطلب هي ${totalCost.toFixed(2)}$. توجه لصفحة شحن الرصيد أولاً.`);
+            if (currentBalance < price) {
+                alert("رصيدك الحالي لا يكفي لهذا الطلب، فضلاً اشحن حسابك.");
                 return;
             }
 
             const btn = document.getElementById('sendBtn');
-            btn.disabled = true;
-            btn.innerText = "جاري الاتصال بالسيرفر الفوري...";
+            btn.disabled = true; btn.innerText = "جاري إرسال طلبك الفوري...";
 
             try {
-                // إرسال الطلب لـ API Foollo مباشرة بناءً على الصور والتوثيق
-                const apiResponse = await fetch('https://foollo.com/api/v2', {
+                const res = await fetch('https://foollo.com/api/v2', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        key: FOOLLO_API_KEY,
-                        action: "add",
-                        service: serviceSelect.value,
-                        link: document.getElementById('inputData').value,
-                        quantity: qty
+                        key: FOOLLO_API_KEY, action: "add",
+                        service: serviceSelect.value, link: document.getElementById('inputData').value,
+                        quantity: document.getElementById('orderQty').value
                     })
                 });
+                const result = await res.json();
 
-                const apiResult = await apiResponse.json();
-
-                if (apiResult.order) {
-                    // 1. الخصم الفوري من رصيد العميل في الفايربيز ومكسبك دخل جيبك
-                    const newBalance = currentBalance - totalCost;
-                    await updateDoc(doc(db, "users_balance", currentUser.uid), {
-                        balance: newBalance
-                    });
-
-                    // 2. تسجيل الفاتورة والعملية في سجل الطلبات
+                if (result.order) {
+                    await updateDoc(doc(db, "users_balance", currentUser.uid), { balance: currentBalance - price });
                     await addDoc(collection(db, "vip_orders"), {
-                        userId: currentUser.uid,
-                        foolloOrderId: apiResult.order,
-                        serviceName: selectedOption.text,
-                        target: document.getElementById('inputData').value,
-                        qty: qty,
-                        cost: totalCost,
-                        status: "pending",
-                        time: new Date()
+                        userId: currentUser.uid, foolloOrderId: result.order,
+                        serviceName: selectedOption.text, target: document.getElementById('inputData').value,
+                        qty: document.getElementById('orderQty').value, cost: price, time: new Date()
                     });
-
-                    currentBalance = newBalance;
-                    document.getElementById('userBalanceDisplay').innerText = newBalance.toFixed(2);
-                    alert(`تم قبول طلبك بنجاح! رقم العملية بالسيرفر: ${apiResult.order}`);
+                    alert("تم قبول الطلب وبدأ التنفيذ بنجاح!");
                     form.reset();
                 } else {
-                    alert("خطأ من السيرفر الرئيسي: " + (apiResult.error || "تأكد من شحن حسابك الأساسي داخل فولو"));
+                    alert("مشكلة بالسيرفر: " + (result.error || "تأكد من رصيدك في فولو"));
                 }
-
             } catch (err) {
-                alert("حدث خطأ في الاتصال بالسيرفر، تأكد من الاتصال بالشبكة.");
-                console.error(err);
+                alert("خطأ اتصال بالشبكة.");
             } finally {
-                btn.disabled = false;
-                btn.innerText = "تأكيد الخصم والطلب الفوري";
+                btn.disabled = false; btn.innerText = "تأكيد الخصم والطلب";
             }
         });
 
-        // دالة التنقل الفخمة وعرض سجل الطلبات الحية
-        window.switchPage = function(pageId) {
-            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-
-            if (pageId === 'ordersLogPage') {
-                loadOrdersLog();
-            }
-        }
-
-        // سحب وعرض كروت طلبات العميل الحالي من الـ Firebase
-        async function loadOrdersLog() {
-            const container = document.getElementById('ordersContainer');
-            container.innerHTML = '<div class="text-center text-muted py-4">جاري تحديث سجل طلباتك...</div>';
-
-            try {
-                const q = query(
-                    collection(db, "vip_orders"), 
-                    where("userId", "==", currentUser.uid),
-                    orderBy("time", "desc")
-                );
-                const querySnapshot = await getDocs(q);
-                container.innerHTML = '';
-
-                if (querySnapshot.empty) {
-                    container.innerHTML = '<div class="text-center text-muted py-4">لم تقم بأي طلبات سابقة حتى الآن.</div>';
-                    return;
-                }
-
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const itemHtml = `
-                        <div class="smm-card">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold text-primary">${data.serviceName}</span>
-                                <span class="status-badge status-pending">قيد التنفيذ</span>
-                            </div>
-                            <div class="small text-muted mb-1">الهدف: ${data.target}</div>
-                            <div class="small text-muted mb-1">الكمية: ${data.qty} | التكلفة: ${data.cost.toFixed(2)}$</div>
-                            <div class="text-secondary" style="font-size:10px;">رقم السيرفر: ${data.foolloOrderId}</div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', itemHtml);
-                });
-            } catch (err) {
-                container.innerHTML = '<div class="text-center text-danger py-4">خطأ أثناء جلب الداتا، تأكد من الـ Rules في Firestore.</div>';
-                console.error(err);
-            }
+        // تسجيل الخروج
+        window.logoutUser = function() {
+            signOut(auth).then(() => { window.location.href = "login.html"; });
         }
     </script>
 </body>
-</html>
+                    </html>
