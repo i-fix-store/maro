@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - متجر Maro</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-dark: #111827;
+            --border-dark: #1f2937;
+            --accent-color: #6366f1;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 24px;
+            padding: 35px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .smm-input {
+            background-color: var(--bg-dark) !important;
+            border: 1px solid var(--border-dark) !important;
+            color: var(--text-main) !important;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .smm-input:focus {
+            border-color: var(--accent-color) !important;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        .btn-fahm {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 14px;
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+
+        .btn-fahm:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .toggle-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <!-- لوجو وعنوان متجر Maro -->
+        <div class="text-center mb-4">
+            <div class="fs-1 mb-2 text-warning"><i class="fa-solid fa-gem"></i></div>
+            <h4 class="fw-bold m-0" id="pageTitle">تسجيل الدخول</h4>
+            <p class="text-muted small mt-1" id="pageSubtitle">أهلاً بك في عالم الفخامة الرقمية مع Maro Store</p>
+        </div>
+
+        <!-- فورمة الدفع والتسجيل الذكية -->
+        <form id="authForm">
+            <!-- خانة البريد الإلكتروني -->
+            <div class="mb-3">
+                <label class="form-label text-muted small">البريد الإلكتروني</label>
+                <input type="email" class="form-control smm-input" id="authEmail" placeholder="name@example.com" required>
+            </div>
+
+            <!-- خانة الرقم السري -->
+            <div class="mb-4">
+                <label class="form-label text-muted small">الرقم السري</label>
+                <input type="password" class="form-control smm-input" id="authPassword" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-fahm w-100" id="authBtn">دخول الحساب</button>
+        </form>
+
+        <!-- التبديل السفلي -->
+        <div class="text-center mt-4 small text-muted">
+            <span id="toggleText">ليس لديك حساب؟</span> 
+            <span class="toggle-link fw-bold" id="toggleAction" onclick="toggleAuthMode()">إنشاء حساب جديد</span>
+        </div>
+    </div>
+
+    <!-- كود الجافا سكريبت المطور والمربوط بـ Firebase الحقيقي بتاعك -->
+    <script type="module">
+        // الروابط المباشرة (CDN) لتجنب أخطاء الـ 404
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // الـ Config الحقيقي والخاص بـ Maro Store
+        const firebaseConfig = {
+            apiKey: "AIzaSyDlD_MhqAJnumigyt4duKkIK8B5wvXJMws",
+            authDomain: "maro-store-2b73a.firebaseapp.com",
+            projectId: "maro-store-2b73a",
+            storageBucket: "maro-store-2b73a.firebasestorage.app",
+            messagingSenderId: "862462628995",
+            appId: "1:862462628995:web:85378ddb993b32915eb7b6",
+            measurementId: "G-HRBVTHN3SB"
+        };
+
+        // تشغيل الفايربيز
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let isLoginMode = true; // الوضع الافتراضي هو الدخول
+
+        // دالة التبديل البصري بين الدخول والتسجيل
+        window.toggleAuthMode = function() {
+            isLoginMode = !isLoginMode;
+            const title = document.getElementById('pageTitle');
+            const subtitle = document.getElementById('pageSubtitle');
+            const btn = document.getElementById('authBtn');
+            const toggleText = document.getElementById('toggleText');
+            const toggleAction = document.getElementById('toggleAction');
+
+            if (isLoginMode) {
+                title.innerText = "تسجيل الدخول";
+                subtitle.innerText = "أهلاً بك في عالم الفخامة الرقمية مع Maro Store";
+                btn.innerText = "دخول الحساب";
+                toggleText.innerText = "ليس لديك حساب؟";
+                toggleAction.innerText = "إنشاء حساب جديد";
+            } else {
+                title.innerText = "حساب جديد";
+                subtitle.innerText = "انضم إلينا في Maro Store وابدأ تزويد حساباتك فوراً";
+                btn.innerText = "تسجيل حساب جديد";
+                toggleText.innerText = "لديك حساب بالفعل؟";
+                toggleAction.innerText = "تسجيل الدخول";
+            }
+        }
+
+        // معالجة إرسال الفورم (الدخول أو التسجيل)
+        const form = document.getElementById('authForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const btn = document.getElementById('authBtn');
+
+            btn.disabled = true;
+            btn.innerText = "جاري المعالجة...";
+
+            try {
+                if (isLoginMode) {
+                    // 1. تسجيل الدخول بحساب موجود فعلاً
+                    await signInWithEmailAndPassword(auth, email, password);
+                    alert("مرحباً بك مجدداً في متجر Maro!");
+                    window.location.href = "dashboard.html"; // التوجيه للوحة التحكم فوراً
+                } else {
+                    // 2. إنشاء حساب جديد تماماً وتجهيز خانة الرصيد الافتراضي (0$)
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // إنشاء مستند للعميل في Firestore وتصفير رصيده كبداية
+                    await setDoc(doc(db, "users_balance", user.uid), {
+                        email: user.email,
+                        balance: 0.00
+                    });
+
+                    alert("تم إنشاء حسابك الفخم في متجر Maro بنجاح! رصيدك الحالي هو 0.00$");
+                    window.location.href = "dashboard.html"; // التوجيه للوحة التحكم
+                }
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                if (error.code === 'auth/weak-password') {
+                    alert("الرقم السري ضعيف، خليه 6 أرقام أو حروف على الأقل.");
+                } else if (error.code === 'auth/email-already-in-use') {
+                    alert("الإيميل ده مسجل بيه حساب قبل كده!");
+                } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    alert("خطأ: الإيميل أو الباسورد مش مظبوطين، تأكد منهم.");
+                } else {
+                    alert("خطأ: تأكد من تفعيل الـ Email/Password Auth في لوحة Firebase.");
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerText = isLoginMode ? "دخول الحساب" : "تسجيل حساب جديد";
+            }
+        });
+    </script>
+</body>
+</html>
