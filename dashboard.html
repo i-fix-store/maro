@@ -199,7 +199,7 @@
             <div id="ordersContainer"></div>
         </div>
 
-        <!-- صفحة 3: شحن الرصيد بـ الـ QR الكود -->
+        <!-- صفحة 3: شحن الرصيد بـ الـ QR الكود المحدث بأرقامك -->
         <div id="depositPage" class="page-content">
             <div class="smm-card text-center">
                 <h5 class="fw-bold mb-4 text-warning"><i class="fa-solid fa-qrcode me-2"></i> الشحن السريع بالـ QR Code</h5>
@@ -208,25 +208,23 @@
                     <div class="col-6">
                         <h6 class="fw-bold text-white mb-2">فودافون كاش</h6>
                         <div class="qr-box mb-2">
-                            <!-- حط رابط صورة الـ QR بتاع كاش هنا بعد ما تجهزه -->
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=01012345678" alt="Vodafone Cash QR">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=01009210650" alt="Vodafone Cash QR">
                         </div>
-                        <div class="small text-muted">01012345678</div>
+                        <div class="small text-muted fw-bold">01009210650</div>
                     </div>
 
                     <div class="col-6">
-                        <h6 class="fw-bold text-white mb-2">إنستا باي</h6>
+                        <h6 class="fw-bold text-white mb-2">إنستا باي (InstaPay)</h6>
                         <div class="qr-box mb-2">
-                            <!-- حط رابط صورة الـ QR بتاع انستا باي هنا -->
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=maro@instapay" alt="InstaPay QR">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=%2B201104824922" alt="InstaPay QR">
                         </div>
-                        <div class="small text-muted">maro@instapay</div>
+                        <div class="small text-muted fw-bold">01104824922</div>
                     </div>
                 </div>
 
                 <div class="p-3 border border-warning rounded-3 bg-dark mt-4">
-                    <p class="small m-0 text-warning fw-bold">⚠️ امسح الكود وحوّل المبلغ، ثم ارسل صورة الإيصال للدعم الفني لتفعيل رصيدك فوراً!</p>
-                    <a href="https://wa.me/201012345678" target="_blank" class="btn btn-success btn-sm mt-3 fw-bold">
+                    <p class="small m-0 text-warning fw-bold">⚠️ امسح الكود وحوّل المبلغ، ثم ارسل صورة الإيصال لتفعيل رصيدك فوراً!</p>
+                    <a href="https://wa.me/201104824922?text=%D9%85%D8%B1%D8%A5%D8%A8%D8%A7%D9%81%20%D9%85%D8%A7%D8%B1%D9%82%D8%8C%20%D9%82%D9%85%D8%AA%20%D8%A8%D8%AA%D8%AD%D9%85%D9%8A%D9%84%20%D8%A7%D9%84%D9%85%D8%A8%D9%84%D8%BA%20%D9%8A%D8%B1%D8%AC%D9%8A%20%D8%AA%D9%81%D8%B9%D9%8A%D9%84%20%D8%A7%D9%84%D8%B1%D8%B5%D9%8A%D8%AF" target="_blank" class="btn btn-success btn-sm mt-3 fw-bold">
                         <i class="fa-brands fa-whatsapp me-1"></i> إرسال الإيصال للواتساب
                     </a>
                 </div>
@@ -272,7 +270,9 @@
 
         let currentUser = null;
         let currentBalance = 0.00;
-        const FOOLLO_API_KEY = "9ad38d349b760ad684dc82bec10301f0";
+        
+        // ⚠️ تأكد أنك وضعت مفتاح الـ API الحقيقي هنا الذي جلبته من صفحة الأكاونت
+        const FOOLLO_API_KEY = "YOUR_FOOLLO_API_KEY_HERE";
 
         // فتح وقفل المنيو الجانبي
         window.toggleMenu = function() {
@@ -288,7 +288,7 @@
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             if(event && event.currentTarget) event.currentTarget.classList.add('active');
             
-            toggleMenu(); // اقفل المنيو بعد الاختيار للحصول على مظهر مريح
+            toggleMenu();
 
             if (pageId === 'ordersLogPage') loadOrdersLog();
         }
@@ -298,11 +298,10 @@
             if (user) {
                 currentUser = user;
                 
-                // ملء بيانات صفحة الحساب (Profile)
                 document.getElementById('profileEmail').innerText = user.email;
                 document.getElementById('profileUid').innerText = user.uid;
 
-                // التحديث التلقائي الفوري للرصيد (لو الأدمن شحن يتغير في نفس الثانية!)
+                // التحديث الفوري المباشر للرصيد
                 onSnapshot(doc(db, "users_balance", user.uid), (docSnap) => {
                     if (docSnap.exists()) {
                         currentBalance = docSnap.data().balance;
@@ -314,7 +313,7 @@
             }
         });
 
-        // كود معالجة وإرسال الطلبات لـ فولو (مع فحص الرصيد مسبقاً)
+        // كود معالجة وإرسال الطلبات لـ فولو
         const form = document.getElementById('smmOrderForm');
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -361,10 +360,48 @@
             }
         });
 
+        // سحب وعرض كروت طلبات العميل
+        async function loadOrdersLog() {
+            const container = document.getElementById('ordersContainer');
+            container.innerHTML = '<div class="text-center text-muted py-4">جاري تحديث سجل طلباتك...</div>';
+
+            try {
+                const q = query(
+                    collection(db, "vip_orders"), 
+                    where("userId", "==", currentUser.uid),
+                    orderBy("time", "desc")
+                );
+                const querySnapshot = await getDocs(q);
+                container.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    container.innerHTML = '<div class="text-center text-muted py-4">لم تقم بأي طلبات سابقة حتى الآن.</div>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const itemHtml = `
+                        <div class="smm-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-primary">${data.serviceName}</span>
+                                <span class="status-badge bg-warning text-dark p-1 rounded" style="font-size:11px;">قيد التنفيذ</span>
+                            </div>
+                            <div class="small text-muted mb-1">الهدف: ${data.target}</div>
+                            <div class="small text-muted mb-1">الكمية: ${data.qty} | التكلفة: ${data.cost.toFixed(2)}$</div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                });
+            } catch (err) {
+                container.innerHTML = '<div class="text-center text-danger py-4">خطأ أثناء جلب الداتا، تأكد من الـ Rules.</div>';
+            }
+        }
+
         // تسجيل الخروج
         window.logoutUser = function() {
             signOut(auth).then(() => { window.location.href = "login.html"; });
         }
     </script>
 </body>
-                    </html>
+</html>
